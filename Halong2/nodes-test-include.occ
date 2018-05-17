@@ -104,7 +104,7 @@ PROC CellNode([] CHAN OF diam.proto in, out, VAL INT identity, CHAN OF BYTE from
         fromMux ! '*t'
         out.real64(maxElevation, 0, 0, fromMux)
         fromMux ! '*t'
-        out.number(numberOfFishes, 8, fromMux)
+        out.number(numberOfFishes, 0, fromMux)
         fromMux ! '*n'
 :
 
