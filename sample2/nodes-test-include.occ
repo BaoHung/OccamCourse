@@ -18,7 +18,7 @@ PROC Node([] CHAN OF diam.proto in, out, VAL INT identity, CHAN OF BYTE fromMux)
   BYTE myChar:
   TIMER clock:
   SEQ
-    seed := identity
+    seed := identity * 2
     randNumber, seed := random(100,seed) -- random number between 0 and 100
     myLoc := NetLocation[identity]  -- got my location!
     -- write it on papers for neighbours !
