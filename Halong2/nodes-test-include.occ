@@ -30,6 +30,7 @@ PROC CellNode([] CHAN OF diam.proto in, out, VAL INT identity, CHAN OF BYTE from
     theCellArray := Cells[identity]
     position := theCellArray[position]
     myLoc := position
+    maxElevation:=myLoc[elevation]
     seed := identity * 2
     SEQ turns = 0 FOR NumberOfSteps
       SEQ
@@ -51,7 +52,6 @@ PROC CellNode([] CHAN OF diam.proto in, out, VAL INT identity, CHAN OF BYTE from
         minY:=myLoc[y]
         maxX:=myLoc[x]
         maxY:=myLoc[y]
-        maxElevation:=myLoc[elevation]
         SEQ i=0 FOR SIZE in
           SEQ
             itsLoc := inBuf[i]
@@ -89,10 +89,10 @@ PROC CellNode([] CHAN OF diam.proto in, out, VAL INT identity, CHAN OF BYTE from
         out.number(identity, 8, fromMux)
         out.number(myLoc[x], 8, fromMux)
         out.number(myLoc[y], 8, fromMux)
-        out.number(minX, 8, fromMux)
-        out.number(minY, 8, fromMux)
-        out.number(maxX, 8, fromMux)
-        out.number(maxY, 8, fromMux)
+--        out.number(minX, 8, fromMux)
+--        out.number(minY, 8, fromMux)
+--        out.number(maxX, 8, fromMux)
+--        out.number(maxY, 8, fromMux)
         out.real64(maxElevation, 0, 0, fromMux)
         fromMux ! '*n'
 :
