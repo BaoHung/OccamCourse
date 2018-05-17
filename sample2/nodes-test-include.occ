@@ -14,12 +14,19 @@ PROC Node([] CHAN OF diam.proto in, out, VAL INT identity, CHAN OF BYTE fromMux)
   Location myLoc,itsLoc:
   [MaxFanOut] Location inBuf, outBuf:
   INT minX,maxX,minY,maxY:
+  INT seed, randNumber, currentTime:
   BYTE myChar:
+  TIMER clock:
   SEQ
+    seed := identity
+    randNumber, seed := random(100,seed) -- random number between 0 and 100
     myLoc := NetLocation[identity]  -- got my location!
     -- write it on papers for neighbours !
     SEQ i = 0 FOR SIZE out
       outBuf[i] := myLoc
+    -- implement a random delay
+    clock ? currentTime 
+    clock ? AFTER currentTime + (randNumber * 100000)
     -- send and receive papers on the neighborhood!
     PAR
       PAR i=0 FOR SIZE out
