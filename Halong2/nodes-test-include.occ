@@ -20,17 +20,24 @@ PROC CellNode([] CHAN OF diam.proto in, out, VAL INT identity, CHAN OF BYTE from
   [MaxFanOut] CellPosition inBuf, outBuf:
   INT minX,maxX,minY,maxY: -- for bbox comutation
   REAL64 maxElevation:
-
   INT seed, randNumber, currentTime:
   BYTE myChar:
   TIMER clock:
+  INT numberOfFishes: -- number of fishes in the cell
   CellArray theCellArray:
   CellPosition position:
   SEQ
     theCellArray := Cells[identity]
     position := theCellArray[position]
     myLoc := position
-    maxElevation:=myLoc[elevation]
+    maxElevation := position[elevation]
+
+    IF
+      maxElevation > 0.5
+        numberOfFishes, seed := random(10, seed)
+      TRUE
+        SKIP
+
     seed := identity * 2
     SEQ turns = 0 FOR NumberOfSteps
       SEQ
@@ -61,7 +68,7 @@ PROC CellNode([] CHAN OF diam.proto in, out, VAL INT identity, CHAN OF BYTE from
                 maxElevation := itsLoc[elevation]
               TRUE
                 SKIP
-
+    
             IF
               itsLoc[x] > maxX
                 maxX := itsLoc[x]
@@ -95,6 +102,8 @@ PROC CellNode([] CHAN OF diam.proto in, out, VAL INT identity, CHAN OF BYTE from
 --        out.number(maxY, 8, fromMux)
         fromMux ! '*t'
         out.real64(maxElevation, 0, 0, fromMux)
+        fromMux ! '*t'
+        out.number(numberOfFishes, 8, fromMux)
         fromMux ! '*n'
 :
 
@@ -114,3 +123,4 @@ PROC Mux([] CHAN OF BYTE inChannel, CHAN OF BYTE out)
 :
 
 
+-- ./Halong20 | sort -n -k 4
