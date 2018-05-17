@@ -93,6 +93,7 @@ PROC CellNode([] CHAN OF diam.proto in, out, VAL INT identity, CHAN OF BYTE from
 --        out.number(minY, 8, fromMux)
 --        out.number(maxX, 8, fromMux)
 --        out.number(maxY, 8, fromMux)
+        fromMux ! '*t'
         out.real64(maxElevation, 0, 0, fromMux)
         fromMux ! '*n'
 :
