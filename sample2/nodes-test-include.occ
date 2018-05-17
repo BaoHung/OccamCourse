@@ -9,6 +9,9 @@ PROTOCOL diam.proto IS Location:
 -- procedures matching
 --    Node(P9.in, P9.out,9, toMux [9])
 --    Mux(toMux,stdout)
+-- version where all the processes are looping to implement a distributed algo.
+-- it can be route computation in a sensor network,
+-- or a cellular automata program in a cell system (can run a long time !!!)
 
 VAL INT NumberOfSteps IS 5:
 
@@ -21,62 +24,63 @@ PROC Node([] CHAN OF diam.proto in, out, VAL INT identity, CHAN OF BYTE fromMux)
   TIMER clock:
   SEQ
     seed := identity * 2
-    randNumber, seed := random( 100, seed) -- randNumber is random within [0,100[
     myLoc := NetLocation[identity]  -- got my location!
     -- write it on papers for neighbours !
     SEQ turns = 0 FOR NumberOfSteps
       SEQ
         SEQ i = 0 FOR SIZE out
           outBuf[i] := myLoc
-    -- implement a random delay
-    clock ? currentTime
-    clock ? AFTER currentTime +  (randNumber * 100000)
-    -- send and receive papers on the neighborhood!
-    PAR i=0 FOR SIZE out
-      out[i] ! outBuf[i]  -- send paper in  the air 
-    PAR i=0 FOR SIZE in
-      in[i] ? inBuf[i]
-    -- We got neighbour location in inBuf !!
-    -- Compute BBox
-    minX:=myLoc[xLoc]
-    minY:=myLoc[yLoc]
-    maxX:=myLoc[xLoc]
-    maxY:=myLoc[yLoc]
-    SEQ i=0 FOR SIZE in
-      SEQ
-        itsLoc := inBuf[i]
-        IF
-          itsLoc[xLoc] > maxX
-            maxX := itsLoc[xLoc]
-          TRUE
-            SKIP
-
-        IF
-          itsLoc[yLoc] > maxY
-            maxY := itsLoc[yLoc]
-          TRUE
-            SKIP
-
-        IF
-          itsLoc[xLoc] < minX
-            minX := itsLoc[xLoc]
-          TRUE
-            SKIP
-
-        IF
-          itsLoc[yLoc] < minY
-            minY := itsLoc[yLoc]
-          TRUE
-            SKIP
-
-    out.number(identity, 5, fromMux)
-    out.number(myLoc[xLoc], 5, fromMux)
-    out.number(myLoc[yLoc], 5, fromMux)
-    out.number(minX, 5, fromMux)
-    out.number(minY, 5, fromMux)
-    out.number(maxX, 5, fromMux)
-    out.number(maxY, 5, fromMux)
-    fromMux ! '*n'
+        -- implement a random delay
+        randNumber, seed := random( 100, seed) -- randNumber is random within [0,100[
+        clock ? currentTime
+        clock ? AFTER currentTime +  (randNumber * 50000)
+        -- send and receive papers on the neighborhood!
+        PAR
+          PAR i=0 FOR SIZE out
+            out[i] ! outBuf[i]  -- send paper in  the air 
+          PAR i=0 FOR SIZE in
+            in[i] ? inBuf[i]
+        -- We got neighbour location in inBuf !!
+        -- Compute BBox
+        minX:=myLoc[xLoc]
+        minY:=myLoc[yLoc]
+        maxX:=myLoc[xLoc]
+        maxY:=myLoc[yLoc]
+        SEQ i=0 FOR SIZE in
+          SEQ
+            itsLoc := inBuf[i]
+            IF
+              itsLoc[xLoc] > maxX
+                maxX := itsLoc[xLoc]
+              TRUE
+                SKIP
+    
+            IF
+              itsLoc[yLoc] > maxY
+                maxY := itsLoc[yLoc]
+              TRUE
+                SKIP
+    
+            IF
+              itsLoc[xLoc] < minX
+                minX := itsLoc[xLoc]
+              TRUE
+                SKIP
+    
+            IF
+              itsLoc[yLoc] < minY
+                minY := itsLoc[yLoc]
+              TRUE
+                SKIP
+    
+        out.number(identity, 5, fromMux)
+        out.number(myLoc[xLoc], 5, fromMux)
+        out.number(myLoc[yLoc], 5, fromMux)
+        out.number(minX, 5, fromMux)
+        out.number(minY, 5, fromMux)
+        out.number(maxX, 5, fromMux)
+        out.number(maxY, 5, fromMux)
+        fromMux ! '*n'
 :
 
 PROC Mux([] CHAN OF BYTE inChannel, CHAN OF BYTE out)
@@ -84,10 +88,9 @@ PROC Mux([] CHAN OF BYTE inChannel, CHAN OF BYTE out)
   SEQ
     SEQ turns = 0 FOR NumberOfSteps
       SEQ i = 0 FOR SIZE inChannel -- for each process
-        ALT j=0 FOR SIZE inChannel
-          inChannel[j] ? aValue -- read a byte
-            SEQ
-            -- out.number ( aValue, 0, out) -- write byte on standard output
+        ALT j=0 FOR SIZE inChannel -- non determinist construct
+          inChannel[j] ? aValue -- synchronization on j ready channel, and read a byte
+            SEQ -- take this action.
               WHILE aValue <> '*n'
                 SEQ          
                   out ! aValue
