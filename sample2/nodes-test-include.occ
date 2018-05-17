@@ -13,20 +13,20 @@ PROTOCOL diam.proto IS Location:
 PROC Node([] CHAN OF diam.proto in, out, VAL INT identity, CHAN OF BYTE fromMux)
   Location myLoc,itsLoc:
   [MaxFanOut] Location inBuf, outBuf:
-  INT minX,maxX,minY,maxY:
+  INT minX,maxX,minY,maxY: -- for bbox comutation
   INT seed, randNumber, currentTime:
   BYTE myChar:
   TIMER clock:
   SEQ
     seed := identity * 2
-    randNumber, seed := random(100,seed) -- random number between 0 and 100
+    randNumber, seed := random( 100, seed) -- randNumber is random within [0,100[
     myLoc := NetLocation[identity]  -- got my location!
     -- write it on papers for neighbours !
     SEQ i = 0 FOR SIZE out
       outBuf[i] := myLoc
     -- implement a random delay
-    clock ? currentTime 
-    clock ? AFTER currentTime + (randNumber * 100000)
+    clock ? currentTime
+    clock ? AFTER currentTime +  (randNumber * 100000)
     -- send and receive papers on the neighborhood!
     PAR
       PAR i=0 FOR SIZE out
@@ -81,13 +81,13 @@ PROC Mux([] CHAN OF BYTE inChannel, CHAN OF BYTE out)
   SEQ
     SEQ i = 0 FOR SIZE inChannel -- for each process
       ALT j=0 FOR SIZE inChannel
-        inChannel[i] ? aValue -- read a byte
+        inChannel[j] ? aValue -- read a byte
           SEQ
           -- out.number ( aValue, 0, out) -- write byte on standard output
             WHILE aValue <> '*n'
               SEQ          
                 out ! aValue
-                inChannel[i] ? aValue
+                inChannel[j] ? aValue
             out ! '*n' -- write carriage return on standard output
 :
 
