@@ -31,11 +31,11 @@ PROC CellNode([] CHAN OF diam.proto in, out, VAL INT identity, CHAN OF BYTE from
     position := theCellArray[position]
     myLoc := position
     maxElevation := position[elevation]
-    randNumber, seed := random(10, seed)
+    numberOfFishes, seed := random(10, seed)
 
     IF
       maxElevation > 0.5
-        numberOfFishes := randNumber
+        numberOfFishes := 0
       TRUE
         SKIP
 
