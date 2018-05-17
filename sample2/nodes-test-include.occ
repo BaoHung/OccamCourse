@@ -10,6 +10,8 @@ PROTOCOL diam.proto IS Location:
 --    Node(P9.in, P9.out,9, toMux [9])
 --    Mux(toMux,stdout)
 
+VAL INT NumberOfSteps IS 5:
+
 PROC Node([] CHAN OF diam.proto in, out, VAL INT identity, CHAN OF BYTE fromMux)
   Location myLoc,itsLoc:
   [MaxFanOut] Location inBuf, outBuf:
@@ -22,17 +24,18 @@ PROC Node([] CHAN OF diam.proto in, out, VAL INT identity, CHAN OF BYTE fromMux)
     randNumber, seed := random( 100, seed) -- randNumber is random within [0,100[
     myLoc := NetLocation[identity]  -- got my location!
     -- write it on papers for neighbours !
-    SEQ i = 0 FOR SIZE out
-      outBuf[i] := myLoc
+    SEQ turns = 0 FOR NumberOfSteps
+      SEQ
+        SEQ i = 0 FOR SIZE out
+          outBuf[i] := myLoc
     -- implement a random delay
     clock ? currentTime
     clock ? AFTER currentTime +  (randNumber * 100000)
     -- send and receive papers on the neighborhood!
-    PAR
-      PAR i=0 FOR SIZE out
-        out[i] ! outBuf[i]  -- send paper in  the air 
-      PAR i=0 FOR SIZE in
-        in[i] ? inBuf[i]
+    PAR i=0 FOR SIZE out
+      out[i] ! outBuf[i]  -- send paper in  the air 
+    PAR i=0 FOR SIZE in
+      in[i] ? inBuf[i]
     -- We got neighbour location in inBuf !!
     -- Compute BBox
     minX:=myLoc[xLoc]
@@ -79,16 +82,17 @@ PROC Node([] CHAN OF diam.proto in, out, VAL INT identity, CHAN OF BYTE fromMux)
 PROC Mux([] CHAN OF BYTE inChannel, CHAN OF BYTE out)
   BYTE aValue,cr:
   SEQ
-    SEQ i = 0 FOR SIZE inChannel -- for each process
-      ALT j=0 FOR SIZE inChannel
-        inChannel[j] ? aValue -- read a byte
-          SEQ
-          -- out.number ( aValue, 0, out) -- write byte on standard output
-            WHILE aValue <> '*n'
-              SEQ          
-                out ! aValue
-                inChannel[j] ? aValue
-            out ! '*n' -- write carriage return on standard output
+    SEQ turns = 0 FOR NumberOfSteps
+      SEQ i = 0 FOR SIZE inChannel -- for each process
+        ALT j=0 FOR SIZE inChannel
+          inChannel[j] ? aValue -- read a byte
+            SEQ
+            -- out.number ( aValue, 0, out) -- write byte on standard output
+              WHILE aValue <> '*n'
+                SEQ          
+                  out ! aValue
+                  inChannel[j] ? aValue
+              out ! '*n' -- write carriage return on standard output
 :
 
 
