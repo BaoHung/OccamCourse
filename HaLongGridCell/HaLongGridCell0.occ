@@ -9,7 +9,7 @@
 --generic synchronous network model
 --Bernard Pottier. UBO
 -- include data file for physical simulation   
-#INCLUDE   "/home/bh/VW8/Generated/HaLongGridCell/HaLongGridCellData0.occ"
+#INCLUDE   "HaLongGridCellData0.occ"
 
 
 VAL [572][7]BYTE NetProcess IS [   "Px10y1 ", -- id: 1
