@@ -1,0 +1,116 @@
+
+-- processus : 10
+-- min fanout : 2
+-- max fanout : 4
+-- channels   : 30
+
+
+--generated  at May 16, 2018 1:46:32 PM
+--generic synchronous network model
+--Bernard Pottier. UBO
+
+VAL [10][3]BYTE NetProcess IS [   "P1 ", -- id: 1
+  "P10", -- id: 2
+  "P2 ", -- id: 3
+  "P3 ", -- id: 4
+  "P4 ", -- id: 5
+  "P5 ", -- id: 6
+  "P6 ", -- id: 7
+  "P7 ", -- id: 8
+  "P8 ", -- id: 9
+  "P9 "]:
+
+VAL [10][4]BYTE NetProcedure IS [   "Node", -- id: 1
+  "Node", -- id: 2
+  "Node", -- id: 3
+  "Node", -- id: 4
+  "Node", -- id: 5
+  "Node", -- id: 6
+  "Node", -- id: 7
+  "Node", -- id: 8
+  "Node", -- id: 9
+  "Node"]:
+
+DATA TYPE Location
+  RECORD
+    INT xLoc:
+    INT yLoc:
+    INT elevation:
+    INT range:
+:
+VAL [10] Location  NetLocation IS [   [250 , 252 , 0 , 78 ] , -- id: 1
+  [299 , 230 , 0 , 78 ] , -- id: 2
+  [195 , 291 , 0 , 78 ] , -- id: 3
+  [240 , 303 , 0 , 78 ] , -- id: 4
+  [263 , 354 , 0 , 78 ] , -- id: 5
+  [293 , 357 , 0 , 78 ] , -- id: 6
+  [361 , 337 , 0 , 78 ] , -- id: 7
+  [365 , 299 , 0 , 78 ] , -- id: 8
+  [349 , 274 , 0 , 78 ] , -- id: 9
+  [331 , 262 , 0 , 78 ] ]:
+
+
+#USE "course.lib"
+
+
+VAL INT MaxFanOut IS 4:
+
+VAL INT MaxNodes IS 10:
+
+#INCLUDE "nodes-test-include.occ"
+
+PROC someNetwork(CHAN OF BYTE stdin, stdout, stderr)
+
+
+   -- Channel declarations 
+  CHAN OF diam.proto P1.P2,P1.P3,P1.P10:
+  CHAN OF diam.proto P2.P1,P2.P3:
+  CHAN OF diam.proto P3.P1,P3.P2,P3.P4,P3.P5:
+  CHAN OF diam.proto P4.P3,P4.P5:
+  CHAN OF diam.proto P5.P3,P5.P4,P5.P6:
+  CHAN OF diam.proto P6.P5,P6.P7,P6.P8:
+  CHAN OF diam.proto P7.P6,P7.P8,P7.P9:
+  CHAN OF diam.proto P8.P6,P8.P7,P8.P9,P8.P10:
+  CHAN OF diam.proto P9.P7,P9.P8,P9.P10:
+  CHAN OF diam.proto P10.P1,P10.P8,P10.P9:
+
+  -- Channel table declaration for nodes 
+  P1.out IS [ P1.P2,P1.P3,P1.P10 ]:
+  P1.in IS [ P2.P1,P3.P1,P10.P1 ]:
+  P2.out IS [ P2.P1,P2.P3 ]:
+  P2.in IS [ P1.P2,P3.P2 ]:
+  P3.out IS [ P3.P1,P3.P2,P3.P4,P3.P5 ]:
+  P3.in IS [ P1.P3,P2.P3,P4.P3,P5.P3 ]:
+  P4.out IS [ P4.P3,P4.P5 ]:
+  P4.in IS [ P3.P4,P5.P4 ]:
+  P5.out IS [ P5.P3,P5.P4,P5.P6 ]:
+  P5.in IS [ P3.P5,P4.P5,P6.P5 ]:
+  P6.out IS [ P6.P5,P6.P7,P6.P8 ]:
+  P6.in IS [ P5.P6,P7.P6,P8.P6 ]:
+  P7.out IS [ P7.P6,P7.P8,P7.P9 ]:
+  P7.in IS [ P6.P7,P8.P7,P9.P7 ]:
+  P8.out IS [ P8.P6,P8.P7,P8.P9,P8.P10 ]:
+  P8.in IS [ P6.P8,P7.P8,P9.P8,P10.P8 ]:
+  P9.out IS [ P9.P7,P9.P8,P9.P10 ]:
+  P9.in IS [ P7.P9,P8.P9,P10.P9 ]:
+  P10.out IS [ P10.P1,P10.P8,P10.P9 ]:
+  P10.in IS [ P1.P10,P8.P10,P9.P10 ]:
+
+
+  -- Program Body 
+
+  [MaxNodes]CHAN OF BYTE toMux:
+  PAR
+    Node(P1.in, P1.out,0, toMux [0])
+    Node(P10.in, P10.out,1, toMux [1])
+    Node(P2.in, P2.out,2, toMux [2])
+    Node(P3.in, P3.out,3, toMux [3])
+    Node(P4.in, P4.out,4, toMux [4])
+    Node(P5.in, P5.out,5, toMux [5])
+    Node(P6.in, P6.out,6, toMux [6])
+    Node(P7.in, P7.out,7, toMux [7])
+    Node(P8.in, P8.out,8, toMux [8])
+    Node(P9.in, P9.out,9, toMux [9])
+    Mux(toMux,stdout)
+     -- End of program body 
+:
