@@ -4,7 +4,7 @@
 -- define code for Mux() procedure
 
 -- protocol
-PROTOCOL diam.proto IS Location:
+PROTOCOL diam.proto IS CellPosition:
 
 -- procedures matching
 --    Node(P9.in, P9.out,9, toMux [9])
@@ -13,19 +13,24 @@ PROTOCOL diam.proto IS Location:
 -- it can be route computation in a sensor network,
 -- or a cellular automata program in a cell system (can run a long time !!!)
 
-VAL INT NumberOfSteps IS 5:
+VAL INT NumberOfSteps IS 1:
 
 PROC CellNode([] CHAN OF diam.proto in, out, VAL INT identity, CHAN OF BYTE fromMux)
-  Location myLoc,itsLoc:
-  [MaxFanOut] Location inBuf, outBuf:
+  CellPosition myLoc,itsLoc:
+  [MaxFanOut] CellPosition inBuf, outBuf:
   INT minX,maxX,minY,maxY: -- for bbox comutation
+  REAL64 maxElevation:
+
   INT seed, randNumber, currentTime:
   BYTE myChar:
   TIMER clock:
+  CellArray theCellArray:
+  CellPosition position:
   SEQ
+    theCellArray := Cells[identity]
+    position := theCellArray[position]
+    myLoc := position
     seed := identity * 2
-    myLoc := NetLocation[identity]  -- got my location!
-    -- write it on papers for neighbours !
     SEQ turns = 0 FOR NumberOfSteps
       SEQ
         SEQ i = 0 FOR SIZE out
@@ -33,7 +38,7 @@ PROC CellNode([] CHAN OF diam.proto in, out, VAL INT identity, CHAN OF BYTE from
         -- implement a random delay
         randNumber, seed := random( 100, seed) -- randNumber is random within [0,100[
         clock ? currentTime
-        clock ? AFTER currentTime +  (randNumber * 50000)
+        clock ? AFTER currentTime +  (randNumber * 5000)
         -- send and receive papers on the neighborhood!
         PAR
           PAR i=0 FOR SIZE out
@@ -42,44 +47,44 @@ PROC CellNode([] CHAN OF diam.proto in, out, VAL INT identity, CHAN OF BYTE from
             in[i] ? inBuf[i]
         -- We got neighbour location in inBuf !!
         -- Compute BBox
-        minX:=myLoc[xLoc]
-        minY:=myLoc[yLoc]
-        maxX:=myLoc[xLoc]
-        maxY:=myLoc[yLoc]
+        minX:=myLoc[x]
+        minY:=myLoc[y]
+        maxX:=myLoc[x]
+        maxY:=myLoc[y]
         SEQ i=0 FOR SIZE in
           SEQ
             itsLoc := inBuf[i]
             IF
-              itsLoc[xLoc] > maxX
-                maxX := itsLoc[xLoc]
+              itsLoc[x] > maxX
+                maxX := itsLoc[x]
               TRUE
                 SKIP
     
             IF
-              itsLoc[yLoc] > maxY
-                maxY := itsLoc[yLoc]
+              itsLoc[y] > maxY
+                maxY := itsLoc[y]
               TRUE
                 SKIP
     
             IF
-              itsLoc[xLoc] < minX
-                minX := itsLoc[xLoc]
+              itsLoc[x] < minX
+                minX := itsLoc[x]
               TRUE
                 SKIP
     
             IF
-              itsLoc[yLoc] < minY
-                minY := itsLoc[yLoc]
+              itsLoc[y] < minY
+                minY := itsLoc[y]
               TRUE
                 SKIP
     
-        out.number(identity, 5, fromMux)
-        out.number(myLoc[xLoc], 5, fromMux)
-        out.number(myLoc[yLoc], 5, fromMux)
-        out.number(minX, 5, fromMux)
-        out.number(minY, 5, fromMux)
-        out.number(maxX, 5, fromMux)
-        out.number(maxY, 5, fromMux)
+        out.number(identity, 8, fromMux)
+        out.number(myLoc[x], 8, fromMux)
+        out.number(myLoc[y], 8, fromMux)
+        out.number(minX, 8, fromMux)
+        out.number(minY, 8, fromMux)
+        out.number(maxX, 8, fromMux)
+        out.number(maxY, 8, fromMux)
         fromMux ! '*n'
 :
 
