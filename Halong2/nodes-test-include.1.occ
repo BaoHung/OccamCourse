@@ -1,10 +1,12 @@
+-- Random fishes
+
 -- 3 things to declare
 -- diam.proto for data circulating on links
 -- define code for Node() procedure
 -- define code for Mux() procedure
 
 -- protocol
-PROTOCOL diam.proto IS INT:
+PROTOCOL diam.proto IS CellPosition:
 
 -- procedures matching
 --    Node(P9.in, P9.out,9, toMux [9])
@@ -17,42 +19,31 @@ VAL INT NumberOfSteps IS 1:
 
 PROC CellNode([] CHAN OF diam.proto in, out, VAL INT identity, CHAN OF BYTE fromMux)
   CellPosition myLoc,itsLoc:
-  [MaxFanOut] INT inBuf, outBuf:
+  [MaxFanOut] CellPosition inBuf, outBuf:
   INT minX,maxX,minY,maxY: -- for bbox comutation
   REAL64 maxElevation:
   INT seed, randNumber, currentTime:
   BYTE myChar:
   TIMER clock:
-  INT numberOfFishes, limit, outgoing, goneFishes: -- number of fishes in the cell
+  INT numberOfFishes: -- number of fishes in the cell
   CellArray theCellArray:
   CellPosition position:
   SEQ
-    -- geographic interface
     theCellArray := Cells[identity]
     position := theCellArray[position]
     myLoc := position
-    -- geographic initial fishes < 10
     seed := identity 
     numberOfFishes, seed := random( 10, seed) -- numberOfFishes is random within [0,10[
-    -- get the elevation
     maxElevation := position[elevation]
     IF 
-      maxElevation>0.5 -- on the ground => no fishes
+      maxElevation>0.5
         numberOfFishes :=0
       TRUE
         SKIP
-
-    -- start the automaton for NumberOfSteps turns
     SEQ turns = 0 FOR NumberOfSteps
       SEQ
-        -- fill the output buffer: prepare fishes for neighbour
-        goneFishes := 0
         SEQ i = 0 FOR SIZE out
-          SEQ
-            limit := (numberOfFishes/2) / (SIZE out) -- share outgoing between neighbours
-            outgoing, seed := random(limit, seed)
-            outBuf[i] := outgoing
-            goneFishes := goneFishes + outgoing
+          outBuf[i] := myLoc
         -- implement a random delay
         randNumber, seed := random( 100, seed) -- randNumber is random within [0,100[
         clock ? currentTime
@@ -63,16 +54,55 @@ PROC CellNode([] CHAN OF diam.proto in, out, VAL INT identity, CHAN OF BYTE from
             out[i] ! outBuf[i]  -- send paper in  the air 
           PAR i=0 FOR SIZE in
             in[i] ? inBuf[i]
-        -- We got neighbour location in inBuf !!   
-        IF
-          maxElevation > 0.5
-            numberOfFishes :=0
-          TRUE -- accept fishes from the neighbours
-            SEQ
-              -- take care of outgoing fishes
-              numberOfFishes := numberOfFishes - goneFishes
-              SEQ i=0 FOR SIZE in
-                numberOfFishes := numberOfFishes + inBuf[i]
+        -- We got neighbour location in inBuf !!
+        -- Compute BBox
+        minX:=myLoc[x]
+        minY:=myLoc[y]
+        maxX:=myLoc[x]
+        maxY:=myLoc[y]
+        SEQ i=0 FOR SIZE in
+          SEQ
+            itsLoc := inBuf[i]
+            IF
+              itsLoc[elevation] > maxElevation
+                maxElevation := itsLoc[elevation]
+              TRUE
+                SKIP
+    
+            IF
+              itsLoc[x] > maxX
+                maxX := itsLoc[x]
+              TRUE
+                SKIP
+    
+            IF
+              itsLoc[y] > maxY
+                maxY := itsLoc[y]
+              TRUE
+                SKIP
+    
+            IF
+              itsLoc[x] < minX
+                minX := itsLoc[x]
+              TRUE
+                SKIP
+    
+            IF
+              itsLoc[y] < minY
+                minY := itsLoc[y]
+              TRUE
+                SKIP
+    
+        out.number(identity, 8, fromMux)
+--        out.number(myLoc[x], 8, fromMux)
+--        out.number(myLoc[y], 8, fromMux)
+--        out.number(minX, 8, fromMux)
+--        out.number(minY, 8, fromMux)
+--        out.number(maxX, 8, fromMux)
+--        out.number(maxY, 8, fromMux)
+        fromMux ! '*t'
+        out.real64(maxElevation,5,2,fromMux)
+        fromMux ! '*t'
         out.number(numberOfFishes,0,fromMux)
         fromMux ! '*n'
 :
