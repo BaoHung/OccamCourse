@@ -1,0 +1,117 @@
+-- 3 things to declare
+-- diam.proto for data circulating on links
+-- define code for Node() procedure
+-- define code for Mux() procedure
+
+-- protocol
+PROTOCOL diam.proto IS CellPosition:
+
+-- procedures matching
+--    Node(P9.in, P9.out,9, toMux [9])
+--    Mux(toMux,stdout)
+-- version where all the processes are looping to implement a distributed algo.
+-- it can be route computation in a sensor network,
+-- or a cellular automata program in a cell system (can run a long time !!!)
+
+VAL INT NumberOfSteps IS 1:
+
+PROC CellNode([] CHAN OF diam.proto in, out, VAL INT identity, CHAN OF BYTE fromMux)
+  CellPosition myLoc,itsLoc:
+  [MaxFanOut] CellPosition inBuf, outBuf:
+  INT minX,maxX,minY,maxY: -- for bbox comutation
+  REAL64 maxElevation:
+  INT seed, randNumber, currentTime:
+  BYTE myChar:
+  TIMER clock:
+  INT numberOfFishes:
+  CellArray theCellArray:
+  CellPosition position:
+  SEQ
+    theCellArray := Cells[identity]
+    position := theCellArray[position]
+    myLoc := position
+    seed := identity 
+    numberOfFishes, seed := random( 10, seed) -- numberOfFishes is random within [0,10[
+    maxElevation := position[elevation]
+    IF 
+      maxElevation>0.5
+        numberOfFishes :=0
+      TRUE
+        SKIP
+    SEQ turns = 0 FOR NumberOfSteps
+      SEQ
+        SEQ i = 0 FOR SIZE out
+          outBuf[i] := myLoc
+        -- implement a random delay
+        randNumber, seed := random( 100, seed) -- randNumber is random within [0,100[
+        clock ? currentTime
+        clock ? AFTER currentTime +  (randNumber * 5000)
+        -- send and receive papers on the neighborhood!
+        PAR
+          PAR i=0 FOR SIZE out
+            out[i] ! outBuf[i]  -- send paper in  the air 
+          PAR i=0 FOR SIZE in
+            in[i] ? inBuf[i]
+        -- We got neighbour location in inBuf !!
+        -- Compute BBox
+        minX:=myLoc[x]
+        minY:=myLoc[y]
+        maxX:=myLoc[x]
+        maxY:=myLoc[y]
+        SEQ i=0 FOR SIZE in
+          SEQ
+            itsLoc := inBuf[i]
+            IF
+              itsLoc[elevation] > maxElevation
+                maxElevation := itsLoc[elevation]
+              TRUE
+                SKIP
+    
+            IF
+              itsLoc[x] > maxX
+                maxX := itsLoc[x]
+              TRUE
+                SKIP
+    
+            IF
+              itsLoc[y] > maxY
+                maxY := itsLoc[y]
+              TRUE
+                SKIP
+    
+            IF
+              itsLoc[x] < minX
+                minX := itsLoc[x]
+              TRUE
+                SKIP
+    
+            IF
+              itsLoc[y] < minY
+                minY := itsLoc[y]
+              TRUE
+                SKIP
+    
+        out.number(identity, 8, fromMux)
+        fromMux ! '*t'
+        out.real64(maxElevation,5,2,fromMux)
+        fromMux ! '*t'
+        out.number(numberOfFishes,0,fromMux)
+        fromMux ! '*n'
+:
+
+PROC Mux([] CHAN OF BYTE inChannel, CHAN OF BYTE out)
+  BYTE aValue,cr:
+  SEQ
+    SEQ turns = 0 FOR NumberOfSteps
+      SEQ i = 0 FOR SIZE inChannel -- for each process
+        ALT j=0 FOR SIZE inChannel -- non determinist construct
+          inChannel[j] ? aValue -- synchronization on j ready channel, and read a byte
+            SEQ -- take this action.
+              WHILE aValue <> '*n'
+                SEQ          
+                  out ! aValue
+                  inChannel[j] ? aValue
+              out ! '*n' -- write carriage return on standard output
+:
+
+
