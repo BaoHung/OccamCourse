@@ -50,7 +50,11 @@ PROC CellNode([] CHAN OF diam.proto in, out, VAL INT identity, CHAN OF BYTE from
         SEQ i = 0 FOR SIZE out
           SEQ
             limit := (numberOfFishes/2) / (SIZE out) -- share outgoing between neighbours
-            outgoing, seed := random(limit, seed)
+            IF
+              limit > 0
+                outgoing, seed := random(limit, seed)
+              TRUE
+                SKIP
             outBuf[i] := outgoing
             goneFishes := goneFishes + outgoing
         -- implement a random delay
