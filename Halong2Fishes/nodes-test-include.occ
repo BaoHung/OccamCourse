@@ -49,6 +49,12 @@ PROC CellNode([]CHAN OF diam.proto in,out, VAL INT id, CHAN OF BYTE toMux)
     elevation := position[elevation]
     ielev := INT ROUND elevation
     
+    ConfigLocale()
+--    IF 
+--      id=150
+--        population := 1000
+--      TRUE
+--        population := 0
     seed := id 
     population, seed := random( 10, seed) -- numberOfFishes is random within [0,10[
     IF 
@@ -56,13 +62,6 @@ PROC CellNode([]CHAN OF diam.proto in,out, VAL INT id, CHAN OF BYTE toMux)
         population :=0
       TRUE
         SKIP
-        
-    ConfigLocale()
---    IF 
---      id=150
---        population := 1000
---      TRUE
---        population := 0
     -- buffer out
     outgoing := population/2
     SEQ i=0 FOR SIZE out
