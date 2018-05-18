@@ -30,16 +30,14 @@ PROC CellNode([] CHAN OF diam.proto in, out, VAL INT identity, CHAN OF BYTE from
     theCellArray := Cells[identity]
     position := theCellArray[position]
     myLoc := position
+    seed := identity 
+    numberOfFishes, seed := random( 10, seed) -- numberOfFishes is random within [0,10[
     maxElevation := position[elevation]
-    numberOfFishes, seed := random(10, seed)
-
-    IF
-      maxElevation > 0.5
-        numberOfFishes := 0
+    IF 
+      maxElevation>0.5
+        numberOfFishes :=0
       TRUE
         SKIP
-
-    seed := identity * 2
     SEQ turns = 0 FOR NumberOfSteps
       SEQ
         SEQ i = 0 FOR SIZE out
@@ -63,7 +61,6 @@ PROC CellNode([] CHAN OF diam.proto in, out, VAL INT identity, CHAN OF BYTE from
         SEQ i=0 FOR SIZE in
           SEQ
             itsLoc := inBuf[i]
-
             IF
               itsLoc[elevation] > maxElevation
                 maxElevation := itsLoc[elevation]
@@ -95,16 +92,16 @@ PROC CellNode([] CHAN OF diam.proto in, out, VAL INT identity, CHAN OF BYTE from
                 SKIP
     
         out.number(identity, 8, fromMux)
-        out.number(myLoc[x], 8, fromMux)
-        out.number(myLoc[y], 8, fromMux)
+--        out.number(myLoc[x], 8, fromMux)
+--        out.number(myLoc[y], 8, fromMux)
 --        out.number(minX, 8, fromMux)
 --        out.number(minY, 8, fromMux)
 --        out.number(maxX, 8, fromMux)
 --        out.number(maxY, 8, fromMux)
         fromMux ! '*t'
-        out.real64(maxElevation, 0, 0, fromMux)
+        out.real64(maxElevation,5,2,fromMux)
         fromMux ! '*t'
-        out.number(numberOfFishes, 8, fromMux)
+        out.number(numberOfFishes,0,fromMux)
         fromMux ! '*n'
 :
 
