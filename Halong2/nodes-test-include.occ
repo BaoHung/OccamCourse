@@ -31,7 +31,7 @@ PROC CellNode([] CHAN OF diam.proto in, out, VAL INT identity, CHAN OF BYTE from
     theCellArray := Cells[identity]
     position := theCellArray[position]
     myLoc := position
-    -- geographic initial fishes < 10
+    -- generate initial fishes less than 10
     seed := identity 
     numberOfFishes, seed := random( 10, seed) -- numberOfFishes is random within [0,10[
     -- get the elevation
@@ -54,7 +54,7 @@ PROC CellNode([] CHAN OF diam.proto in, out, VAL INT identity, CHAN OF BYTE from
               limit > 0
                 outgoing, seed := random(limit, seed)
               TRUE
-                SKIP
+                outgoing := 0
             outBuf[i] := outgoing
             goneFishes := goneFishes + outgoing
         -- implement a random delay
